@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+<input type="file" accept="image/*" multiple
+       name="uploader-input"
+       class="uploader-file"
+       id="upload">
+<img id="CaptchaImg"  />
+<p id="box"  />
+</body>
+<script>
+    function hexToBase64(str) {
+        return btoa(String.fromCharCode.apply(null, str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" ")));
+    }
+        document.getElementById('upload').addEventListener('change', function (event) {
+    var $file = event.currentTarget;
+    var formData = new FormData();
+    var file = $file.files;
+    for (var i = 0; i < file.length; i++) {
+        // 文件名称，文件对象
+        formData = new FormData();
+        formData.append("filedata", file[i]);
+        var xhr = new XMLHttpRequest();
+
+        xhr.open("POST", "/age/image", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(formData);
+        xhr.responseType = "arraybuffer";
+
+        xhr.onload = function() {
+            var byteArray = new Uint8Array(xhr.response);
+            var base64Data = btoa(String.fromCharCode.apply(null, byteArray));
+            $("#CaptchaImg").attr("src", "data:image/jpeg;base64, " + base64Data);
+        };
+    }
+});
+    </script>
+<script src="/speech/jquery-3.5.1.js"></script>
+</html>

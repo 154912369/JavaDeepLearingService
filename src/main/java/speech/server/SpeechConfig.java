@@ -12,7 +12,7 @@ public class SpeechConfig {
     KaldiRecognizer getspeechServer(){
         Model model = new Model("chinese/model");
         SpkModel spkModel = new SpkModel("model-spk");
-        KaldiRecognizer rec = new KaldiRecognizer(model, spkModel,  48000f);
+        KaldiRecognizer rec = new KaldiRecognizer(model, spkModel,  16000f);
         return rec;
     }
 }
