@@ -6,7 +6,8 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
-import org.springframework.web.multipart.MultipartFile;
+
+import java.util.UUID;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -57,13 +58,14 @@ public class AgeServer {
         stream.write(imageBytes);
 //        stream.write(("\r\n--" + boundary + "\r\n").getBytes());
     }
-    public Mat processPicture(MultipartFile filedata) {
+    public Mat processPicture(InputStream stream) {
         try {
 
-                Mat orginal =  readInputStreamIntoMat(filedata.getInputStream());
+                Mat orginal =  readInputStreamIntoMat(stream);
                 Mat reponse_mat = new Mat();
-                long a= AgeGenderCheck.GetAgeAndSex(orginal .getNativeObjAddr(),reponse_mat.getNativeObjAddr());
-                Imgcodecs.imwrite("this.jpg",reponse_mat);
+                AgeGenderCheck.GetAgeAndSex(orginal .getNativeObjAddr(),reponse_mat.getNativeObjAddr());
+            String uuid = UUID.randomUUID().toString();
+            Imgcodecs.imwrite("picture/"+uuid+".jpg",reponse_mat);
                 return reponse_mat;
         }catch ( IOException e){
             return null;

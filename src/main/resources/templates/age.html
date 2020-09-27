@@ -2,43 +2,182 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="format-detection" content="telephone=no, email=no">
+    <meta name="x5-orientation" content="portrait">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="author" content="chaode">
+    <title>Age recognize</title>
+    <style>
+        body {
+            text-align: center;
+        }
 
+        .container {
+            position: relative;
+            flex: 1;
+            margin: 5px;
+            background: #aaa;
+        }
+        img, canvas {
+            display: block;
+            width: 100%;
+        }
+        .title {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            color: #fff;
+            background: rgba(0,0,0,0.1);
+            padding: 5px 0;
+        }
+    </style>
 </head>
 <body>
-<input type="file" accept="image/*" multiple
-       name="uploader-input"
-       class="uploader-file"
-       id="upload">
-<img id="CaptchaImg"  />
-<p id="box"  />
-</body>
+<p>
+    <button id="upload">照片</button>
+<p id="thistest">请选一张照片上传，人脸太近会识别错误</p>
+</p>
+<div style="display: flex;">
+    <div class="container">
+        <img id="original_image">
+    </div>
+</div>
 <script>
-    function hexToBase64(str) {
-        return btoa(String.fromCharCode.apply(null, str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" ")));
+    function changeFileToBaseURL(file,fn){
+        // 创建读取文件对象
+        var fileReader = new FileReader();
+        //如果file没定义返回null
+        if(file == undefined) return fn(null);
+        // 读取file文件,得到的结果为base64位
+        fileReader.readAsDataURL(file);
+        fileReader.onload = function(){
+            // 把读取到的base64
+            var imgBase64Data = this.result;
+            fn(imgBase64Data);
+        }
     }
-        document.getElementById('upload').addEventListener('change', function (event) {
-    var $file = event.currentTarget;
-    var formData = new FormData();
-    var file = $file.files;
-    for (var i = 0; i < file.length; i++) {
-        // 文件名称，文件对象
-        formData = new FormData();
-        formData.append("filedata", file[i]);
-        var xhr = new XMLHttpRequest();
-
-        xhr.open("POST", "/age/image", true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.send(formData);
-        xhr.responseType = "arraybuffer";
-
-        xhr.onload = function() {
-            var byteArray = new Uint8Array(xhr.response);
-            var base64Data = btoa(String.fromCharCode.apply(null, byteArray));
-            $("#CaptchaImg").attr("src", "data:image/jpeg;base64, " + base64Data);
-        };
+    function dataURLtoFile(dataurl, filename) {
+        var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--){
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, {type:mime});
     }
-});
-    </script>
+    function pressImg(param){
+        //如果没有回调函数就不执行
+        if(param && param.succ){
+            //如果file没定义返回null
+            if(param.file == undefined) return param.succ(null);
+            //给参数附初始值
+            param.targetSize = param.hasOwnProperty("targetSize") ? param.targetSize : -1;
+            param.width = param.hasOwnProperty("width") ? param.width : -1;
+            param.fileName = param.hasOwnProperty("fileName") ? param.fileName: "image";
+            param.quality = param.hasOwnProperty("quality") ? param.quality : 0.92;
+            var _this = this;
+            // 得到文件类型
+            var fileType = param.file.type;
+            // console.log(fileType) //image/jpeg
+            if(fileType.indexOf("image") == -1){
+                console.log('请选择图片文件^_^');
+                return param.succ(null);
+            }
+            //如果当前size比目标size小，直接输出
+            var size = param.file.size;
+            if(param.targetSize > size){
+                return param.succ(param.file);
+            }
+            // 读取file文件,得到的结果为base64位
+            changeFileToBaseURL(param.file,function(base64){
+                if(base64){
+                    var image = new Image();
+                    image.src = base64;
+                    image.onload = function(){
+                        // 获得长宽比例
+                        var scale = this.width / this.height;
+                        // console.log(scale);
+                        //创建一个canvas
+                        var canvas = document.createElement('canvas');
+                        //获取上下文
+                        var context = canvas.getContext('2d');
+                        //获取压缩后的图片宽度,如果width为-1，默认原图宽度
+                        canvas.width = param.width == -1 ? this.width : param.width;
+                        //获取压缩后的图片高度,如果width为-1，默认原图高度
+                        canvas.height = param.width == -1 ? this.height : parseInt(param.width / scale);
+                        //把图片绘制到canvas上面
+                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        //压缩图片，获取到新的base64Url
+                        var newImageData = canvas.toDataURL(fileType,param.quality);
+                        //将base64转化成文件流
+                        var resultFile = dataURLtoFile(newImageData,param.fileName);
+                        //判断如果targetSize有限制且压缩后的图片大小比目标大小大，就弹出错误
+                        if(param.targetSize != -1 && param.targetSize < resultFile.size){
+                            console.log("图片上传尺寸太大，请重新上传^_^");
+                            param.succ(null);
+                        }else{
+                            //返回文件流
+                            param.succ(resultFile);
+                        }
+                    }
+                }
+            });
+        }
+    }
+    upload.addEventListener('click', function () {
+        inputImage.input({
+            camera: true,
+            format: 'file',
+            success: function (files) {
+                console.log("picture is "+files[0].size);
+                pressImg({
+                    file:files[0],
+                    targetSize: 1024 * 1024,
+                    quality:files[0].size/1024/1024,
+                    width:600,
+                    succ:function(resultFile){
+                        //如果不是null就是压缩成功
+                        if(resultFile){
+                            formData = new FormData();
+                            formData.append("filedata",resultFile);
+                            var xhr = new XMLHttpRequest();
+                           try{
+                            xhr.open("POST", "/age/image", true);
+                            //xhr.setRequestHeader("Content-Type","multipart/form-data");
+                            xhr.send(formData);
+                            xhr.responseType = "arraybuffer";
+
+                            xhr.onload = function() {
+                                var byteArray = new Uint8Array(xhr.response);
+                                var base64Data = btoa(String.fromCharCode.apply(null, byteArray));
+
+                                $("#original_image").attr("src", "data:image/jpeg;base64, " + base64Data);
+                                if(base64Data.length>500){
+                                    document.getElementById("thistest").innerText="请继续选一张照片上传";
+                                }else {
+                                    document.getElementById("thistest").innerText="可能是因为你的脸太近了，识别有问题，请重新上传";
+                                }
+
+                            };}catch (e) {
+                               console.log(e);
+                               document.getElementById("thistest").innerText="可能是因为你的脸太近了，识别有问题，请重新上传";
+                           }
+                        }
+                    }
+                })
+
+
+            }
+        });
+    });
+
+
+</script>
 <script src="/speech/jquery-3.5.1.js"></script>
+<script src="/speech/exif.js"></script>
+<script src="/speech/inputImage.js"></script>
+
+</body>
 </html>

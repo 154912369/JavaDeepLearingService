@@ -9,5 +9,7 @@ public class AgeGenderCheck {
     static {
         System.loadLibrary("age_gender");
     }
-    public final static native long GetAgeAndSex(long origin,long matPtr);
+
+    public final static native void GetAgeAndSex(long origin,long matPtr);
+    public final static native void NetInit(String ageModel,String  ageProto,String genderModel,String  genderProto,String faceModel,String  faceProto);
 }

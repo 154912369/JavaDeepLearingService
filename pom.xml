@@ -175,6 +175,9 @@
                             <classpathPrefix>lib/</classpathPrefix>
                             <mainClass>Application</mainClass>
                         </manifest>
+                        <manifestEntries>
+                            <Class-Path>lib/opencv-1.0.0.jar</Class-Path>
+                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
