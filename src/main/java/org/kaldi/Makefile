@@ -1,8 +1,8 @@
-#编译kaldi
+# 编译kaldi,可以看https://alphacephei.com/vosk/install。除了一般kaldi编译方式之外，还需要在编译时指定mathlib=OPENBLAS。
 # `export KALDI_ROOT=<KALDI_ROOT>`
 # `export JAVA_HOME=<JAVA_HOME>`
 # `make`
-#将生成的libvosk_jni.so复制到Djava.library.path
+#将生成的libvosk_jni.so复制到Djava.library.path,从https://alphacephei.com/vosk/install下载中文的语音识别模型。
 KALDI_ROOT ?= $(HOME)/kaldi
 CFLAGS := -g -O2 -DPIC -fPIC -Wno-unused-function
 CPPFLAGS := -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -I$(KALDI_ROOT)/src -I$(KALDI_ROOT)/tools/openfst/include -I../src
@@ -45,25 +45,25 @@ VOSK_SOURCES = \
 libvosk_jni.so: $(VOSK_SOURCES)
 	$(CXX) -std=c++11   -shared -o $@ $(CPPFLAGS) $(CFLAGS) $(VOSK_SOURCES) $(KALDI_LIBS)
 
-vosk_wrap.cc: vosk.i
-	mkdir -p org/kaldi
-	swig -c++ -I src \
-		-java -package org.kaldi \
-		-outdir org/kaldi -o $@ $<
+# vosk_wrap.cc: vosk.i
+# 	mkdir -p org/kaldi
+# 	swig -c++ -I src \
+# 		-java -package org.kaldi \
+# 		-outdir org/kaldi -o $@ $<
 
 clean:
 	$(RM) *.so *_wrap.cc *_wrap.o test/*.class
 	$(RM) -r org model-en
 
-model:
-	wget https://alphacephei.com/kaldi/models/vosk-model-small-en-us-0.3.zip
-	unzip vosk-model-small-en-us-0.3.zip && rm vosk-model-small-en-us-0.3.zip
-	mv vosk-model-small-en-us-0.3 model
-
-model-spk:
-	wget https://alphacephei.com/kaldi/models/vosk-model-spk-0.3.zip
-	unzip vosk-model-spk-0.3.zip && rm vosk-model-spk-0.3.zip
-	mv vosk-model-spk-0.3 model-spk
+# model:
+# 	wget https://alphacephei.com/kaldi/models/vosk-model-small-en-us-0.3.zip
+# 	unzip vosk-model-small-en-us-0.3.zip && rm vosk-model-small-en-us-0.3.zip
+# 	mv vosk-model-small-en-us-0.3 model
+#
+# model-spk:
+# 	wget https://alphacephei.com/kaldi/models/vosk-model-spk-0.3.zip
+# 	unzip vosk-model-spk-0.3.zip && rm vosk-model-spk-0.3.zip
+# 	mv vosk-model-spk-0.3 model-spk
 
 #run: model model-spk
 #	javac test/*.java org/kaldi/*.java

@@ -1,4 +1,4 @@
-#代码编译方式
+# 代码编译方式,先编译opencv
 # `export JAVA_HOME=<JAVA_HOME>`
 #  cmake .
 #  make
